@@ -4,14 +4,12 @@
 #include <cassert>
 #include <iostream>
 #include <map>
-//#include <random>
 #include <vector>
 
 #include <SDL.h>
 
 #include "math.h"
 #include "model.h"
-//#include "texture.h"
 #include "tgaimage.h"
 #include "timer.h"
 #include "main.h"
@@ -201,38 +199,14 @@ void triangles(std::vector<uint32_t>& pixels, std::vector<int>& zbuffer, Vec3i t
 #ifdef PRINT_PIXEL
         std::cout << p.x << ',' << p.y << ',' << w0 << ',' << w1 << ',' << w2 << '\n';
 #endif
-        //std::cout << "Non-SIMD Pixel:\t" << p.x << ", " << p.y << '\t' << w0 << ',' << w1 << ',' << w2 << '\n';
-  //      int point = p.y * SCREEN_WIDTH + p.x;
-  //      if (point >= 0 && point < POINTS)
-  //        pixels[point] = argb;
         int point = p.y * SCREEN_WIDTH + p.x;
         // TODO factor this out
         //int zpoint = t0.z * w0 + t1.z * w1 + t2.z * w2;
         if (zbuffer[point] < z)
         {
-          // TODO calculate the values instead at P and increment similar to w0/w0_row etc.
-          //int16_t u = (uvs[0].x * (float)w0 + uvs[1].x * (float)w1 + uvs[2].x * (float)w2) / doubleArea * texture.width();
-          //int16_t v = (1.0f - (uvs[0].y * (float)w0 + uvs[1].y * (float)w1 + uvs[2].y * (float)w2) / doubleArea) * texture.height();
 #ifdef PRINT_PIXEL
           std::cout << "uv: " << u << ',' << v << '\n';
 #endif
-
-          //uint32_t argb = (t0R * w0 + t1R * w1 + t2R * w2) << 16 + (t0G * w0 + t1G * w1 + t2G * w2) << 8 + (t0B * w0 + t1B * w1 + t2B * w2);
-          /*std::cout << "uvs[0]: " << uvs[0].x << ',' << uvs[0].y << '\n';
-          std::cout << "uvs[1]: " << uvs[1].x << ',' << uvs[1].y << '\n';
-          std::cout << "uvs[2]: " << uvs[2].x << ',' << uvs[2].y << '\n';
-          std::cout << "U:      " << (uvs[0].x * w0 + uvs[1].x * w1 + uvs[2].x * w2) / 2.f << '\n';
-          std::cout << "V:      " << (uvs[0].y * w0 + uvs[1].y * w1 + uvs[2].y * w2) / 2.f << '\n';*/
-
-
-          //float u = (uvs[0].x * w0 + uvs[1].x * w1 + uvs[2].x * w2) / 2.f;
-          //float v = (uvs[0].y * w0 + uvs[1].y * w1 + uvs[2].y * w2) / 2.f;
-
-          //TGAColor color = texture.get(u * texture.width(), v * texture.height());
-          //uint32_t argb = 0xff;
-          //uint32_t argb = (color.bgra[2] << 16) | (color.bgra[1] << 8) | color.bgra[0];
-          /*std::cout << "uv:   " << u * texture.width() << ',' << v * texture.height() << '\n';
-          std::cout << "argb: " << std::bitset<24>(argb) << '\n';*/
 
           TGAColor color = texture.get(u, texture.height() - v);
           argb = ((int)(color.bgra[2] * intensity) << 16) | ((int)(color.bgra[1] * intensity) << 8) | (int)(color.bgra[0] * intensity);
@@ -271,7 +245,6 @@ void triangles_simd(std::vector<uint32_t>& pixels, Vec2i t0, Vec2i t1, Vec2i t2,
 {
   Timer t("triangles - Inside-Outside (SIMD)", timerContext);
 
-
   int minX = min3(t0.x, t1.x, t2.x);
   int minY = min3(t0.y, t1.y, t2.y);
   int maxX = max3(t0.x, t1.x, t2.x);
@@ -294,8 +267,6 @@ void triangles_simd(std::vector<uint32_t>& pixels, Vec2i t0, Vec2i t1, Vec2i t2,
   int16_t w1_row = orient2d(t2, t0, p);
   int16_t w2_row = orient2d(t0, t1, p);
 
-
-
   __m256i multiplicand = _mm256_setr_epi16(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
   __m256i vA12 = _mm256_set1_epi16(A12); vA12 = _mm256_mullo_epi16(vA12, multiplicand);
   __m256i vA20 = _mm256_set1_epi16(A20); vA20 = _mm256_mullo_epi16(vA20, multiplicand);
@@ -308,16 +279,7 @@ void triangles_simd(std::vector<uint32_t>& pixels, Vec2i t0, Vec2i t1, Vec2i t2,
 
   for (p.y = minY; p.y < maxY; p.y++)
   {
-    // Barycentric at start of row
-    /*int16_t w0 = w0_row;
-    int16_t w1 = w1_row;
-    int16_t w2 = w2_row;*/
-
-    /*__m256i w0 = _mm256_set1_epi16(w0_row); w0 = _mm256_mullo_epi16(w0, multiplicand);
-    __m256i w1 = _mm256_set1_epi16(w1_row); w0 = _mm256_mullo_epi16(w1, multiplicand);
-    __m256i w2 = _mm256_set1_epi16(w2_row); w0 = _mm256_mullo_epi16(w2, multiplicand);
-    */
-
+    // Setup m256 values for inner loop
     __m256i w0 = _mm256_set1_epi16(w0_row); w0 = _mm256_add_epi16(w0, vA12);
     __m256i w1 = _mm256_set1_epi16(w1_row); w1 = _mm256_add_epi16(w1, vA20);
     __m256i w2 = _mm256_set1_epi16(w2_row); w2 = _mm256_add_epi16(w2, vA01);
@@ -451,25 +413,6 @@ void triangles_tinyrenderer(std::vector<uint32_t>& pixels, Vec3f* pts, const int
   }
 }
 
-int maintest(int argc, char* argv[])
-{
-  //Model model("objs/african_head.obj");
-
-  std::vector<uint32_t> pixels(SCREEN_WIDTH * SCREEN_HEIGHT, 0);
-  int32_t icolor = 0xFF;
-
-  Vec2i scrint[3] = { Vec2i(800, 700), Vec2i(810, 710), Vec2i(820, 740) };
-  std::vector<float> zbuffer(std::numeric_limits<float>::min());
-
-  std::cout << "================ NON SIMD ===================\n";
-  //triangles(pixels, zbuffer, scrint[0], scrint[1], scrint[2], icolor << 16 | icolor << 8 | icolor);
-  std::cout << "================== SIMD =====================\n";
-  triangles_simd(pixels, scrint[0], scrint[1], scrint[2], icolor << 16 | icolor << 8 | icolor);
-
-  return 0;
-
-}
-
 Vec3f m2v(const Mat4x4f& m)
 {
   float invW = 1.0f / m.raw2D[3][0];
@@ -508,12 +451,7 @@ int main(int argc, char* argv[])
   int color = 0;
 
   Model model("objs/african_head.obj");
-  //Model model("objs/mariohead.obj");
-  //Model model("objs/CTcras.obj");
-  //Model model("objs/stanford-bunny.obj");
-  //Model model("objs/helmet.obj");
 
-  //Texture texture("tgas/african_head_diffuse.tga");
   TGAImage texture;
   texture.read_tga_file("tgas/african_head_diffuse.tga");
 
@@ -544,9 +482,6 @@ int main(int argc, char* argv[])
     // Clear pixels
     for (auto& pixel : pixels) pixel = 0;
     for (auto& z : zbuffer) z = std::numeric_limits<int>::min();
-
-    //constexpr float widthOffset = SCREEN_WIDTH / 2.0f;
-    //constexpr float heightOffset = SCREEN_HEIGHT / 2.0f;
 
     constexpr float widthOffset = SCREEN_WIDTH / 2.0f;
     constexpr float heightOffset = SCREEN_HEIGHT / 2.0f;
@@ -607,18 +542,9 @@ int main(int argc, char* argv[])
         float intensity = nor * light_dir;
         if (intensity > 0) // is the intensity check back face culling?
         {
-          //int tX = texture.width() * uvs[0].x;
-          //int tY = texture.height() * uvs[0].y;
-          //TGAColor color = texture.get(tX, tY);
           int icolor = intensity * 255;
-          //int icolor = (color.bgra[2] << 16) | (color.bgra[1] << 8) | (color.bgra[0]);
-          //triangles(pixels, zbuffer, scrint[0], scrint[1], scrint[2], icolor << 16 | icolor << 8 | icolor);
           triangles(pixels, zbuffer, scr3i[0], scr3i[1], scr3i[2], uvs, intensity, texture);
-          //triangles_tinyrenderer(pixels, scr, icolor << 16 | icolor << 8 | icolor, fzbuffer.data());
-
-          //triangles_simd(pixels, scrint[0], scrint[1], scrint[2], icolor << 16 | icolor << 8 | icolor);
-          //triangles_tinyrenderer(pixels, scrint, icolor << 16 | icolor << 8 | icolor);
-
+ 
         }
       }
     }
@@ -639,62 +565,6 @@ int main(int argc, char* argv[])
   SDL_Quit();
 
   std::cin.get();
-
-  return 0;
-}
-
-int main3(int argc, char* argv[])
-{
-  std::vector<uint32_t>pixels; Vec2i t0; Vec2i t1; Vec2i t2; const int32_t argb = 0xff;
-
-  t0 = { 20, 10 };
-  t1 = { 40, 30 };
-  t2 = { 30, 20 };
-
-  int minX = min3(t0.x, t1.x, t2.x);
-  int minY = min3(t0.y, t1.y, t2.y);
-  int maxX = max3(t0.x, t1.x, t2.x);
-  int maxY = max3(t0.y, t1.y, t2.y);
-
-  int A01 = t0.y - t1.y, B01 = t1.x - t0.x;
-  int A12 = t1.y - t2.y, B12 = t2.x - t1.x;
-  int A20 = t2.y - t0.y, B20 = t0.x - t2.x;
-
-  Vec2i p(minX, minY);
-  // Barycentric coordinations at minX/minY
-  int w0_row = orient2d(t1, t2, p);
-  int w1_row = orient2d(t2, t0, p);
-  int w2_row = orient2d(t0, t1, p);
-
-  for (p.y = minY; p.y < maxY; p.y++)
-  {
-    //std::cout << "p.y = " << p.y << '\n';
-    // Barycentric at start of row
-    int w0 = w0_row;
-    int w1 = w1_row;
-    int w2 = w2_row;
-
-    for (p.x = minX; p.x <= maxX; p.x++)
-    {
-      //std::cout << "p.x = " << p.x;
-      if ((w0 | w1 | w2) >= 0)
-        //if (w0 >= 0 && w1 >= 0 && w2 >= 0)
-      {
-        std::cout << "" << p.x << "," << p.y << '\n';
-        //pixels[p.y * SCREEN_WIDTH + p.x] = argb;
-      }
-
-      //std::cout << '\n';
-
-      w0 += A12;
-      w1 += A20;
-      w2 += A01;
-    }
-
-    w0_row += B12;
-    w1_row += B20;
-    w2_row += B01;
-  }
 
   return 0;
 }
