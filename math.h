@@ -15,7 +15,7 @@ struct Mat4x4 {
   };
 
   // TODO Do we want to zero initialize when no values are given for our Matrices/Vectors
-  Mat4x4() : raw({}) {} // TODO Does this even work?
+  Mat4x4() {} // TODO Does this even work?
   Mat4x4(T _val) //: raw({ (_val) }) {}
   {
     //raw = { _val };
@@ -24,6 +24,26 @@ struct Mat4x4 {
       raw[8] = raw[9] = raw[10] = raw[11] = raw[12] = raw[13] = raw[14] = raw[15] =
       _val;
   }
+
+  T* operator[](const int column)
+  {
+    return raw2D[column];
+  }
+
+  static Mat4x4 identity()
+  {
+    Mat4x4 result;
+    for (int c = 0; c < 4; c++)
+    {
+      for (int r = 0; r < 4; r++)
+      {
+        result[c][r] = c == r ? 1.0f : 0.0f;
+      }
+    }
+
+    return result;
+  }
+
   //Mat4x4(T[]& _arr)
 
   /*inline Vec3<T> operator-(const Vec3<T>& rhs) const
@@ -46,6 +66,7 @@ struct Mat4x1 {
   {
     raw[0] = raw[1] = raw[2] = raw[3] = _val;
   }
+
   // Mat4x1(Vec4<T>& rhs) { memcpy(raw, &_val, 4*sizeof(T)); }
   Mat4x1(const Vec4<T>& rhs) { std::copy_n(rhs.raw, 4, raw); }
 

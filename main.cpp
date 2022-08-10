@@ -17,6 +17,7 @@
 
 constexpr int SCREEN_WIDTH = 800;
 constexpr int SCREEN_HEIGHT = 800;
+constexpr int SCREEN_DEPTH = 255;
 constexpr int POINTS = SCREEN_WIDTH * SCREEN_HEIGHT;
 
 TimerContext timerContext;
@@ -347,6 +348,20 @@ Mat4x1f v2m(const Vec3f& v)
   return m;
 }
 
+Mat4x4f viewport(int x, int y, int width, int height)
+{
+  Mat4x4f m = Mat4x4f::identity();
+  m[0][3] = x + width / 2.0f;
+  m[1][3] = y + height / 2.0f;
+  m[2][3] = SCREEN_DEPTH / 2.0f;
+
+  m[0][0] = width / 2.0f;
+  m[1][1] = height / 2.0f;
+  m[2][2] = SCREEN_DEPTH / 2.0f;
+
+  return m;
+}
+
 int main(int argc, char* argv[])
 {
   SDL_Init(SDL_INIT_VIDEO);
@@ -377,6 +392,10 @@ int main(int argc, char* argv[])
   std::vector<float> fzbuffer(SCREEN_WIDTH * SCREEN_HEIGHT);//, -std::numeric_limits<float>::min());
 
   Vec3f camera(0, 0, 3);
+
+  Mat4x4f proj = Mat4x4f::identity();
+  Mat4x4f vp = viewport(SCREEN_WIDTH / 8.0f, SCREEN_HEIGHT / 8.0f, SCREEN_WIDTH * 0.75, SCREEN_HEIGHT * 0.75);
+  proj[3][2] = -1.0f / camera.z;
 
   int numberOfRuns = 0;
 
@@ -438,18 +457,15 @@ int main(int argc, char* argv[])
       size_t numberOfFaces = model.nfaces();
       for (int i = 0; i < numberOfFaces; i++)
       {
-        Vec3f scr[3];
-        Vec2i scrint[3];
         Vec3f world[3];
         Vec3i scr3i[3];
         Vec2f uvs[3];
         for (int j = 0; j < 3; j++)
         {
           Vec3f v = model.vert(i * 3 + j);
-          //scrint[j] = Vec2i((v.x + 1.0f) * widthOffset, (v.y + 1.0f) * heightOffset);
-          scr[j] = Vec3f((v.x + 1.0f) * widthOffset, (v.y + 1.0f) * heightOffset, v.z);
           scr3i[j] = Vec3i((v.x + 1.0f) * widthOffset, (v.y + 1.0f) * heightOffset, v.z);
-          //scr3i[j] = Vec3i((v.x + 4.0f) * widthOffset * 0.25f, (v.y + 4.0f) * heightOffset * 0.25f, (v.z + 4.0f) * 0.25f);
+          //scr3i[j] = m2v(vp * proj * v2m(v));
+
           world[j] = v;
           uvs[j] = model.uv(i * 3 + j);
         }
@@ -462,7 +478,7 @@ int main(int argc, char* argv[])
         {
           int icolor = intensity * 255;
           triangles(pixels, zbuffer, scr3i[0], scr3i[1], scr3i[2], uvs, intensity, texture);
- 
+
         }
       }
     }
