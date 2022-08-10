@@ -124,6 +124,8 @@ void horizontal_scanline_triangles(std::vector<uint32_t>& pixels, Vec2i t0, Vec2
   }
 }
 
+
+
 void triangles(std::vector<uint32_t>& pixels, std::vector<int>& zbuffer, Vec3i t0, Vec3i t1, Vec3i t2, Vec2f* uvs, float intensity, TGAImage& texture) //const int32_t argb)
 {
   Timer t("triangles - Inside-Outside Less Operations Per Pixel (Non-SIMD)", timerContext);
@@ -236,6 +238,15 @@ void triangles(std::vector<uint32_t>& pixels, std::vector<int>& zbuffer, Vec3i t
   }
 
   //__debugbreak();
+}
+
+void triangles(std::vector<uint32_t>& pixels, std::vector<int>& zbuffer, Vec3f t0, Vec3f t1, Vec3f t2, Vec2f* uvs, float intensity, TGAImage& texture) //const int32_t argb)
+{
+  Vec3i t0i(t0.x, t0.y, t0.z);
+  Vec3i t1i(t1.x, t1.y, t1.z);
+  Vec3i t2i(t2.x, t2.y, t2.z);
+
+  triangles(pixels, zbuffer, t0i, t1i, t2i, uvs, intensity, texture);
 }
 
 int totalYDiffs = 0;
@@ -459,13 +470,14 @@ int main(int argc, char* argv[])
       {
         Vec3f world[3];
         Vec3i scr3i[3];
+        Vec3f scr3f[3];
         Vec2f uvs[3];
         for (int j = 0; j < 3; j++)
         {
           Vec3f v = model.vert(i * 3 + j);
-          scr3i[j] = Vec3i((v.x + 1.0f) * widthOffset, (v.y + 1.0f) * heightOffset, v.z);
+          //scr3i[j] = Vec3i((v.x + 1.0f) * widthOffset, (v.y + 1.0f) * heightOffset, v.z);
           //scr3i[j] = m2v(vp * proj * v2m(v));
-
+          scr3f[j] = Vec3f((v.x + 1.0f) * widthOffset, (v.y + 1.0f) * heightOffset, v.z);
           world[j] = v;
           uvs[j] = model.uv(i * 3 + j);
         }
@@ -477,7 +489,8 @@ int main(int argc, char* argv[])
         if (intensity > 0) // is the intensity check back face culling?
         {
           int icolor = intensity * 255;
-          triangles(pixels, zbuffer, scr3i[0], scr3i[1], scr3i[2], uvs, intensity, texture);
+          //triangles(pixels, zbuffer, scr3i[0], scr3i[1], scr3i[2], uvs, intensity, texture);
+          triangles(pixels, zbuffer, scr3f[0], scr3f[1], scr3f[2], uvs, intensity, texture);
 
         }
       }
