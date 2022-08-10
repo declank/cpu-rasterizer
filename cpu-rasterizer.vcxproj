@@ -149,6 +149,7 @@
   <ItemGroup>
     <ClInclude Include="math.h" />
     <ClInclude Include="model.h" />
+    <ClInclude Include="tests.h" />
     <ClInclude Include="texture.h" />
     <ClInclude Include="tgaimage.h" />
     <ClInclude Include="timer.h" />

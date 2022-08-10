@@ -12,6 +12,7 @@
 #include "model.h"
 #include "tgaimage.h"
 #include "timer.h"
+#include "tests.h"
 
 //#define PRINT_PIXEL
 
@@ -343,7 +344,7 @@ void triangles_tinyrenderer(std::vector<uint32_t>& pixels, Vec3f* pts, const int
   }
 }
 
-Vec3f m2v(const Mat4x4f& m)
+Vec3f m2v(const Mat4x1f& m)
 {
   float invW = 1.0f / m.raw2D[3][0];
   return Vec3f(m.raw2D[0][0] * invW, m.raw2D[1][0] * invW, m.raw2D[2][0] * invW);
@@ -375,6 +376,10 @@ Mat4x4f viewport(int x, int y, int width, int height)
 
 int main(int argc, char* argv[])
 {
+#ifdef RUN_TESTS
+  runTests();
+#endif
+
   SDL_Init(SDL_INIT_VIDEO);
 
   SDL_Window* window = SDL_CreateWindow("Software Rasterizer", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_RENDERER_ACCELERATED);
@@ -476,8 +481,8 @@ int main(int argc, char* argv[])
         {
           Vec3f v = model.vert(i * 3 + j);
           //scr3i[j] = Vec3i((v.x + 1.0f) * widthOffset, (v.y + 1.0f) * heightOffset, v.z);
-          //scr3i[j] = m2v(vp * proj * v2m(v));
           scr3f[j] = Vec3f((v.x + 1.0f) * widthOffset, (v.y + 1.0f) * heightOffset, v.z);
+          //scr3f[j] = m2v(vp * proj * v2m(v));
           world[j] = v;
           uvs[j] = model.uv(i * 3 + j);
         }

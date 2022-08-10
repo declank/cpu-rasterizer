@@ -8,6 +8,9 @@ template<typename T>
 struct Vec4;
 
 template<class T>
+struct Mat4x1;
+
+template<class T>
 struct Mat4x4 {
   union {
     T raw[16];
@@ -40,6 +43,31 @@ struct Mat4x4 {
         result[c][r] = c == r ? 1.0f : 0.0f;
       }
     }
+
+    return result;
+  }
+
+  Mat4x4<T> operator*(const Mat4x4<T>& rhs)
+  {
+    Mat4x4<T> result;
+    for (int c = 0; c < 4; c++)
+    {
+      for (int r = 0; r < 4; r++)
+      {
+        result.raw2D[c][r] = 0.0f;
+        for (int k = 0; k < 4; k++)
+        {
+          result.raw2D[c][r] += raw2D[k][r] * rhs.raw2D[c][k];
+        }
+      }
+    }
+    
+    return result;
+  }
+
+  Mat4x1<T> operator*(const Mat4x1<T>& rhs)
+  {
+    Mat4x1<T> result;
 
     return result;
   }
