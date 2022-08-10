@@ -1,5 +1,8 @@
 #pragma once
 
+#include <algorithm>
+#include <cmath>
+
 // forward declarations
 template<typename T>
 struct Vec4;

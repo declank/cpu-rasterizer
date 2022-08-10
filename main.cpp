@@ -6,13 +6,12 @@
 #include <map>
 #include <vector>
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 
 #include "math.h"
 #include "model.h"
 #include "tgaimage.h"
 #include "timer.h"
-#include "main.h"
 
 //#define PRINT_PIXEL
 
@@ -241,87 +240,6 @@ void triangles(std::vector<uint32_t>& pixels, std::vector<int>& zbuffer, Vec3i t
 int totalYDiffs = 0;
 int totalXDiffs = 0;
 
-void triangles_simd(std::vector<uint32_t>& pixels, Vec2i t0, Vec2i t1, Vec2i t2, const int32_t argb)
-{
-  Timer t("triangles - Inside-Outside (SIMD)", timerContext);
-
-  int minX = min3(t0.x, t1.x, t2.x);
-  int minY = min3(t0.y, t1.y, t2.y);
-  int maxX = max3(t0.x, t1.x, t2.x);
-  int maxY = max3(t0.y, t1.y, t2.y);
-
-  minX = minX < 0 ? 0 : minX;
-  minY = minY < 0 ? 0 : minY;
-  maxX = maxX > SCREEN_WIDTH ? SCREEN_WIDTH : maxX;
-  maxY = maxY > SCREEN_HEIGHT ? SCREEN_HEIGHT : maxY;
-
-  //int maxX = minX; int maxY = minY;
-
-  int A01 = t0.y - t1.y, B01 = t1.x - t0.x;
-  int A12 = t1.y - t2.y, B12 = t2.x - t1.x;
-  int A20 = t2.y - t0.y, B20 = t0.x - t2.x;
-
-  Vec2i p(minX, minY);
-  // Barycentric coordinations at minX/minY
-  int16_t w0_row = orient2d(t1, t2, p);
-  int16_t w1_row = orient2d(t2, t0, p);
-  int16_t w2_row = orient2d(t0, t1, p);
-
-  __m256i multiplicand = _mm256_setr_epi16(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
-  __m256i vA12 = _mm256_set1_epi16(A12); vA12 = _mm256_mullo_epi16(vA12, multiplicand);
-  __m256i vA20 = _mm256_set1_epi16(A20); vA20 = _mm256_mullo_epi16(vA20, multiplicand);
-  __m256i vA01 = _mm256_set1_epi16(A01); vA01 = _mm256_mullo_epi16(vA01, multiplicand);
-
-  __m256i multiplicandStepX = _mm256_setr_epi16(16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31);
-  __m256i w0StepX = _mm256_set1_epi16(A12); w0StepX = _mm256_mullo_epi16(w0StepX, multiplicandStepX);
-  __m256i w1StepX = _mm256_set1_epi16(A20); w1StepX = _mm256_mullo_epi16(w1StepX, multiplicandStepX);
-  __m256i w2StepX = _mm256_set1_epi16(A01); w2StepX = _mm256_mullo_epi16(w2StepX, multiplicandStepX);
-
-  for (p.y = minY; p.y < maxY; p.y++)
-  {
-    // Setup m256 values for inner loop
-    __m256i w0 = _mm256_set1_epi16(w0_row); w0 = _mm256_add_epi16(w0, vA12);
-    __m256i w1 = _mm256_set1_epi16(w1_row); w1 = _mm256_add_epi16(w1, vA20);
-    __m256i w2 = _mm256_set1_epi16(w2_row); w2 = _mm256_add_epi16(w2, vA01);
-
-    for (p.x = minX; p.x <= maxX; p.x += 16)
-    {
-      /*if ((w0 | w1 | w2) >= 0)
-      {
-        pixels[p.y * SCREEN_WIDTH + p.x] = argb;
-      }*/
-
-      short arrayw0[16], arrayw1[16], arrayw2[16];
-      _mm256_storeu_epi16(arrayw0, w0);
-      _mm256_storeu_epi16(arrayw1, w1);
-      _mm256_storeu_epi16(arrayw2, w2);
-
-      for (int i = 0; i < 16; i++)
-      {
-        if ((arrayw0[i] | arrayw1[i] | arrayw2[i]) >= 0)
-        {
-          //assert((p.x + i) <= maxX);
-#ifdef PRINT_PIXEL
-          std::cout << p.x + i << ',' << p.y << ',' << arrayw0[i] << ',' << arrayw1[i] << ',' << arrayw2[i] << '\n';
-#endif
-          //if ((p.x + i) > maxX) __debugbreak();
-          if ((p.x + i) > maxX) break;
-          pixels[p.y * SCREEN_WIDTH + p.x + i] = argb;
-          //std::cout << "SIMD Pixel:  \t" << p.x + i << ", " << p.y << '\t' << arrayw0[i] << ',' << arrayw1[i] << ',' << arrayw2[i] << '\n';
-        }
-      }
-
-      w0 = _mm256_add_epi16(w0, w0StepX);
-      w1 = _mm256_add_epi16(w1, w1StepX);
-      w2 = _mm256_add_epi16(w2, w2StepX);
-    }
-
-    w0_row += B12;
-    w1_row += B20;
-    w2_row += B01;
-
-  }
-}
 
 struct Edge {
   static const int stepXSize = 4;

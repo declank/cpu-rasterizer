@@ -1,5 +1,9 @@
 .vs/
+.vscode/
 x64/
 x86/
+build/
 
 *.user
+*.o
+
