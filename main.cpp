@@ -23,6 +23,17 @@ constexpr int POINTS = SCREEN_WIDTH * SCREEN_HEIGHT;
 
 TimerContext timerContext;
 
+
+Mat4x1f v2m(const Vec3f& v)
+{
+  Mat4x1f m;
+  m.raw2D[0][0] = v.x;
+  m.raw2D[0][1] = v.y;
+  m.raw2D[0][2] = v.z;
+  m.raw2D[0][3] = 1.0f;
+  return m;
+}
+
 int orient2d(Vec2i& a, Vec2i& b, Vec2i& c)
 {
   return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
@@ -346,23 +357,22 @@ void triangles_tinyrenderer(std::vector<uint32_t>& pixels, Vec3f* pts, const int
 
 Vec3f m2v(const Mat4x1f& m)
 {
-  float invW = 1.0f / m.raw2D[3][0];
-  return Vec3f(m.raw2D[0][0] * invW, m.raw2D[1][0] * invW, m.raw2D[2][0] * invW);
+  float invW = 1.0f / m.raw[3];
+  return Vec3f(m.raw[0] * invW, m.raw[1] * invW, m.raw[2] * invW);
 }
 
-Mat4x1f v2m(const Vec3f& v)
-{
-  Mat4x1f m;
-  m.raw2D[0][0] = v.x;
-  m.raw2D[1][0] = v.y;
-  m.raw2D[2][0] = v.z;
-  m.raw2D[3][0] = 1.0f;
-  return m;
-}
+
 
 Mat4x4f viewport(int x, int y, int width, int height)
 {
+  //x = width - x;
+  //y = height - y;
+
   Mat4x4f m = Mat4x4f::identity();
+  
+  //width = width * 40.0f;
+  //height = height * 40.0f;
+
   m[0][3] = x + width / 2.0f;
   m[1][3] = y + height / 2.0f;
   m[2][3] = SCREEN_DEPTH / 2.0f;
@@ -370,7 +380,16 @@ Mat4x4f viewport(int x, int y, int width, int height)
   m[0][0] = width / 2.0f;
   m[1][1] = height / 2.0f;
   m[2][2] = SCREEN_DEPTH / 2.0f;
+  
 
+  /*m[3][0] = x + width / 2.0f;
+  m[3][1] = y + height / 2.0f;
+  m[3][2] = SCREEN_DEPTH / 2.0f;
+
+  m[0][0] = width / 2.0f;
+  m[1][1] = height / 2.0f;
+  m[2][2] = SCREEN_DEPTH / 2.0f;
+  */
   return m;
 }
 
@@ -378,6 +397,7 @@ int main(int argc, char* argv[])
 {
 #ifdef RUN_TESTS
   runTests();
+  //return 0;
 #endif
 
   SDL_Init(SDL_INIT_VIDEO);
@@ -404,13 +424,15 @@ int main(int argc, char* argv[])
   TGAImage texture;
   texture.read_tga_file("tgas/african_head_diffuse.tga");
 
+
   std::vector<int> zbuffer(SCREEN_WIDTH * SCREEN_HEIGHT);// , std::numeric_limits<int>::min());
   std::vector<float> fzbuffer(SCREEN_WIDTH * SCREEN_HEIGHT);//, -std::numeric_limits<float>::min());
 
-  Vec3f camera(0, 0, 3);
+  Vec3f camera(0, 0, -3.0f);
 
   Mat4x4f proj = Mat4x4f::identity();
   Mat4x4f vp = viewport(SCREEN_WIDTH / 8.0f, SCREEN_HEIGHT / 8.0f, SCREEN_WIDTH * 0.75, SCREEN_HEIGHT * 0.75);
+  //Mat4x4f vp = viewport(0.0f, 0.0f, SCREEN_WIDTH, SCREEN_HEIGHT);
   proj[3][2] = -1.0f / camera.z;
 
   int numberOfRuns = 0;
@@ -447,9 +469,7 @@ int main(int argc, char* argv[])
         auto face = model.face(i);
         for (int j = 0; j < 3; ++j)
         {
-          //Vec3f v0 = model.vert(face[j]);
-          //Vec3f v1 = model.vert(face[(j + 1) % 3]);
-
+          
           Vec3f v0 = model.vert(i * 3 + j);
           Vec3f v1 = model.vert(i * 3 + ((j + 1) % 3));
 
@@ -458,8 +478,7 @@ int main(int argc, char* argv[])
           int32_t x1 = (int32_t)((v1.x + 1.0f) * widthOffset);
           int32_t y1 = (int32_t)((v1.y + 1.0f) * heightOffset);
 
-          //line(pixels, x0, y0, x1, y1, 0xffffff);
-
+          line(pixels, x0, y0, x1, y1, 0xffffff);
         }
       }
     }
@@ -469,20 +488,23 @@ int main(int argc, char* argv[])
       Timer t("Overall - Face Drawing", timerContext);
 
       Vec3f light_dir(0, 0, -1);
+      Vec3f v;
 
       size_t numberOfFaces = model.nfaces();
       for (int i = 0; i < numberOfFaces; i++)
       {
         Vec3f world[3];
-        Vec3i scr3i[3];
+        //Vec3i scr3i[3];
         Vec3f scr3f[3];
+        Vec3f scr3f_nonpers[3];
         Vec2f uvs[3];
         for (int j = 0; j < 3; j++)
         {
-          Vec3f v = model.vert(i * 3 + j);
-          //scr3i[j] = Vec3i((v.x + 1.0f) * widthOffset, (v.y + 1.0f) * heightOffset, v.z);
-          scr3f[j] = Vec3f((v.x + 1.0f) * widthOffset, (v.y + 1.0f) * heightOffset, v.z);
-          //scr3f[j] = m2v(vp * proj * v2m(v));
+          v = model.vert(i * 3 + j);
+
+          scr3f[j] = m2v(proj * vp * v2m(v));
+          scr3f_nonpers[j] = Vec3f((v.x + 1.0f) * widthOffset, (v.y + 1.0f) * heightOffset, v.z);
+
           world[j] = v;
           uvs[j] = model.uv(i * 3 + j);
         }
@@ -494,9 +516,8 @@ int main(int argc, char* argv[])
         if (intensity > 0) // is the intensity check back face culling?
         {
           int icolor = intensity * 255;
-          //triangles(pixels, zbuffer, scr3i[0], scr3i[1], scr3i[2], uvs, intensity, texture);
+          //__debugbreak();
           triangles(pixels, zbuffer, scr3f[0], scr3f[1], scr3f[2], uvs, intensity, texture);
-
         }
       }
     }
@@ -504,7 +525,7 @@ int main(int argc, char* argv[])
     SDL_UpdateTexture(output, nullptr, pixels.data(), 4 * SCREEN_WIDTH);
     SDL_RenderCopyEx(renderer, output, nullptr, nullptr, 0, nullptr, SDL_FLIP_VERTICAL);
     SDL_RenderPresent(renderer);
-    //SDL_Delay(15000);
+    //SDL_Delay(3000);
     //SDL_Delay(1000 / 60);
   }
 

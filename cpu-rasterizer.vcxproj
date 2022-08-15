@@ -143,6 +143,7 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="model.cpp" />
+    <ClCompile Include="tests.cpp" />
     <ClCompile Include="texture.cpp" />
     <ClCompile Include="tgaimage.cpp" />
   </ItemGroup>

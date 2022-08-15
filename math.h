@@ -11,6 +11,9 @@ template<class T>
 struct Mat4x1;
 
 template<class T>
+struct Mat4x4;
+
+template<class T>
 struct Mat4x4 {
   union {
     T raw[16];
@@ -68,6 +71,14 @@ struct Mat4x4 {
   Mat4x1<T> operator*(const Mat4x1<T>& rhs)
   {
     Mat4x1<T> result;
+    for (int r = 0; r < 4; r++)
+    {
+      result.raw[r] = raw2D[r][0] * rhs.raw[0]
+        + raw2D[r][1] * rhs.raw[1]
+        + raw2D[r][2] * rhs.raw[2]
+        + raw2D[r][3] * rhs.raw[3];
+
+    }
 
     return result;
   }
@@ -78,6 +89,8 @@ struct Mat4x4 {
   {
     return Vec3<T>(x - rhs.x, y - rhs.y, z - rhs.z);
   }*/
+
+  
 
   template <class > friend std::ostream& operator<<(std::ostream& s, Mat4x4<T>& v);
 };
@@ -102,6 +115,15 @@ struct Mat4x1 {
   {
     std::copy_n(rhs.raw, 4, raw);
   }*/
+
+  template <class > friend std::ostream& operator<<(std::ostream& s, Mat4x1<T>& v);
+
+  void printMatrix()
+  {
+    std::cout << "[ " << raw[0] << ", " << raw[1] << ", " << raw[2] << ", " << raw[3] << " ]\n";
+  }
+
+  //template <class > friend std::ostream& operator<<(std::ostream& s, Mat4x1<T>& v);
 };
 
 template<class T>
@@ -130,12 +152,18 @@ struct Mat1x4 {
 
 template <class t> std::ostream& operator<<(std::ostream& s, Mat4x4<t>& v) {
   //s << "(" << v.x << ", " << v.y << ")\n";
-  s << "[ " << v[0] << ", " << v[1] << ", " << v[2] << ", " << v[3] << ',\n'
-    << "  " << v[4] << ", " << v[5] << ", " << v[6] << ", " << v[7] << ',\n'
-    << "  " << v[8] << ", " << v[9] << ", " << v[10] << ", " << v[11] << ',\n'
-    << "  " << v[12] << ", " << v[13] << ", " << v[14] << ", " << v[15] << ' ]\n';
+  s << "[ " << v.raw[0] << ", " << v.raw[1] << ", " << v.raw[2] << ", " << v.raw[3] << ", \n"
+    << "  " << v.raw[4] << ", " << v.raw[5] << ", " << v.raw[6] << ", " << v.raw[7] << ", \n"
+    << "  " << v.raw[8] << ", " << v.raw[9] << ", " << v.raw[10] << ", " << v.raw[11] << ", \n"
+    << "  " << v.raw[12] << ", " << v.raw[13] << ", " << v.raw[14] << ", " << v.raw[15] << " ]\n";
   return s;
 }
+
+
+
+/*template <class t> std::ostream& operator<<(std::ostream& s, Mat4x1<t>& v) {
+  
+}*/
 
 typedef Mat4x4<int16_t> Mat4x4i16;
 typedef Mat4x1<int16_t> Mat4x1i16;
@@ -225,7 +253,7 @@ struct Vec3 {
     return raw[i];
   }
 
-  template <class > friend std::ostream& operator<<(std::ostream& s, Vec3<T>& v);
+  template <class T> friend std::ostream& operator<<(std::ostream& s, Vec3<T>& v);
 
 
 };
@@ -320,3 +348,11 @@ T max3(T& a, T& b, T& c)
   return (minAB > c ? minAB : c);
 }
 
+Mat4x1f v2m(const Vec3f& v);
+Mat4x4f viewport(int x, int y, int width, int height);
+
+template <class t> std::ostream& operator<<(std::ostream& s, Mat4x1<t>& v) {
+  //s << "(" << v.x << ", " << v.y << ")\n";
+  s << "[ " << v.raw[0] << ", " << v.raw[1] << ", " << v.raw[2] << ", " << v.raw[3] << " ]\n";
+  return s;
+}
