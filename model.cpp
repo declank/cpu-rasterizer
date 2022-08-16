@@ -73,3 +73,26 @@ Model::Model(const char* filename)
   std::cout << "Number of verts:\t" << verts_.size() << '\n';
   std::cout << "Number of faces:\t" << faces_.size() << '\n';
 }
+
+Model::Model() // private ctor
+{
+
+}
+
+Model Model::make_cube() 
+{
+  Model cube;
+  
+  // Add each face in turn to faces/verts and then copy as before
+  
+  std::vector<float> points = {
+    //Front Left
+    0.25f, 0.25f, 0.25f,
+    0.5f, 0.75f, 0.25f,
+    0.25f, 0.75f, 0.25f,
+    //Front right
+    
+  };
+
+
+}

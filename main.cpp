@@ -12,7 +12,6 @@
 #include "model.h"
 #include "tgaimage.h"
 #include "timer.h"
-#include "tests.h"
 
 //#define PRINT_PIXEL
 
@@ -420,6 +419,7 @@ int main(int argc, char* argv[])
   int color = 0;
 
   Model model("objs/african_head.obj");
+  //Model cube = Model::make_cube();
 
   TGAImage texture;
   texture.read_tga_file("tgas/african_head_diffuse.tga");
@@ -517,7 +517,7 @@ int main(int argc, char* argv[])
         {
           int icolor = intensity * 255;
           //__debugbreak();
-          triangles(pixels, zbuffer, scr3f[0], scr3f[1], scr3f[2], uvs, intensity, texture);
+          triangles(pixels, zbuffer, scr3f_nonpers[0], scr3f_nonpers[1], scr3f_nonpers[2], uvs, intensity, texture);
         }
       }
     }

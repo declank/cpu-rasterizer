@@ -253,7 +253,7 @@ struct Vec3 {
     return raw[i];
   }
 
-  template <class T> friend std::ostream& operator<<(std::ostream& s, Vec3<T>& v);
+  template <class > friend std::ostream& operator<<(std::ostream& s, Vec3<T>& v);
 
 
 };

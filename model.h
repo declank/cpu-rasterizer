@@ -17,7 +17,10 @@ public:
   std::vector<int> face(int index) { return faces_[index]; }
   Vec2f uv(int index) { return orderedUVs_[index]; }
 
+  static Model make_cube();
+
 private:
+  Model();
   std::vector<Vec3f> verts_;
   std::vector<std::vector<int32_t> > faces_;
   std::vector<Vec2f> uvs_;
