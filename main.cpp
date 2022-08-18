@@ -180,13 +180,13 @@ void triangles(std::vector<uint32_t>& pixels, std::vector<int>& zbuffer, Vec3i t
 
   // TODO Change union so access can be done using .u and .v instead of x/y
   float UINC = (uvs[0].x * (float)A12 + uvs[1].x * (float)A20 + uvs[2].x * (float)A01) / (float)doubleArea * (float)texture.width();
-  float VINC = (uvs[0].y * (float)A12 + uvs[1].y * (float)A20 + uvs[2].y * (float)A01) / (float)doubleArea * (float)texture.width();
+  float VINC = (uvs[0].y * (float)A12 + uvs[1].y * (float)A20 + uvs[2].y * (float)A01) / (float)doubleArea * (float)texture.height();
 
   float UINC_ROW = (uvs[0].x * (float)B12 + uvs[1].x * (float)B20 + uvs[2].x * (float)B01) / (float)doubleArea * (float)texture.width();
-  float VINC_ROW = (uvs[0].y * (float)B12 + uvs[1].y * (float)B20 + uvs[2].y * (float)B01) / (float)doubleArea * (float)texture.width();
+  float VINC_ROW = (uvs[0].y * (float)B12 + uvs[1].y * (float)B20 + uvs[2].y * (float)B01) / (float)doubleArea * (float)texture.height();
 
   float u_row = (uvs[0].x * (float)w0_row + uvs[1].x * (float)w1_row + uvs[2].x * (float)w2_row) / doubleArea * texture.width();
-  float v_row = (uvs[0].y * (float)w0_row + uvs[1].y * (float)w1_row + uvs[2].y * (float)w2_row) / doubleArea * texture.width();
+  float v_row = (uvs[0].y * (float)w0_row + uvs[1].y * (float)w1_row + uvs[2].y * (float)w2_row) / doubleArea * texture.height();
 
   int ZINC = t0.z * A12 + t1.z * A20 + t2.z * A01;
   int ZINC_ROW = t0.z * B12 + t1.z * B20 + t2.z * B01;
@@ -418,11 +418,12 @@ int main(int argc, char* argv[])
   std::vector<uint32_t> pixels(SCREEN_WIDTH * SCREEN_HEIGHT, 0);
   int color = 0;
 
-  Model model("objs/african_head.obj");
-  //Model cube = Model::make_cube();
+  //Model model("objs/african_head.obj");
+  Model model = Model::make_cube();
 
   TGAImage texture;
-  texture.read_tga_file("tgas/african_head_diffuse.tga");
+  //texture.read_tga_file("tgas/african_head_diffuse.tga");
+  texture.read_tga_file("tgas/cube.tga");
 
 
   std::vector<int> zbuffer(SCREEN_WIDTH * SCREEN_HEIGHT);// , std::numeric_limits<int>::min());

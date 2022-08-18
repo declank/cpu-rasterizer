@@ -1,3 +1,4 @@
+#include <array>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -85,14 +86,58 @@ Model Model::make_cube()
   
   // Add each face in turn to faces/verts and then copy as before
   
-  std::vector<float> points = {
-    //Front Left
-    0.25f, 0.25f, 0.25f,
-    0.5f, 0.75f, 0.25f,
-    0.25f, 0.75f, 0.25f,
-    //Front right
-    
+  float min_x, min_y, min_z;
+  min_x = min_y = min_z = -0.5f;
+  float max_x, max_y, max_z;
+  max_x = max_y = max_z = 0.5f;
+  
+  std::vector<Vec3f> points = {
+    { min_x, max_y, min_z },
+    { max_x, max_y, min_z },
+    { min_x, min_y, min_z },
+    { max_x, min_y, min_z },
+    { min_x, max_y, max_z },
+    { max_x, max_y, max_z },
+    { min_x, min_y, max_z },
+    { max_x, min_y, max_z }
   };
 
+  // TODO change unordered verts or assign verts ordered
 
+  static uint16_t triangle_list[] = {
+      0, 1, 2, // 0
+      1, 3, 2,
+      4, 6, 5, // 2
+      5, 6, 7,
+      0, 2, 4, // 4
+      4, 2, 6,
+      1, 5, 3, // 6
+      5, 7, 3,
+      0, 4, 1, // 8
+      4, 5, 1,
+      2, 3, 6, // 10
+      6, 3, 7,
+  };
+
+  std::vector<int32_t> facev;
+  for (int face = 0; face < 12; face++)
+  {
+    uint16_t vind = face * 3;
+    cube.verts_.push_back(points[triangle_list[vind]]);   cube.orderedVerts_.push_back(points[triangle_list[vind]]);
+    cube.verts_.push_back(points[triangle_list[vind+1]]); cube.orderedVerts_.push_back(points[triangle_list[vind+1]]);
+    cube.verts_.push_back(points[triangle_list[vind+2]]); cube.orderedVerts_.push_back(points[triangle_list[vind+2]]);
+    facev = { vind, vind + 1, vind + 2 };
+    cube.faces_.push_back(facev);
+
+    Vec2f uv((face / 2) / 6.0f, 0.5f);
+    cube.uvs_.push_back(uv); cube.uvs_.push_back(uv); cube.uvs_.push_back(uv);
+    cube.orderedUVs_.push_back(uv); cube.orderedUVs_.push_back(uv); cube.orderedUVs_.push_back(uv);
+
+    //std::cout << "cubeu: " << uv.x << " cubev: " << uv.y << '\n';
+  }
+
+  std::cout << "Number of verts:\t" << cube.verts_.size() << '\n';
+  std::cout << "Number of faces:\t" << cube.faces_.size() << '\n';
+
+  return cube;
 }
